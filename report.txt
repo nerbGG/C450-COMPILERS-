@@ -1,0 +1,87 @@
+1. Enter the number of hours it took you to complete the project between
+   the <<< and >>> signs below (eg, <<<10>>>).
+
+   <<<80>>>
+   
+2. Enter the difficulty level (1: very easy; 5: very difficult) of the project
+   between the <<< and >>> signs below (eg, <<<3>>>).
+
+   <<<50>>>
+
+3. Provide a short description of how you approached each problem, issues you 
+   encountered, and how you resolved those issues.
+
+   Problem 1 (Long and Double Basic Types)
+      Approach: 
+      This problem was simple but tedious. The first step was to implement analyze() and codegen() for both JLiteralInt and JLiteralDouble.In both cases, I used JLiteralInt as an example. Analyze was straight forward, I set the type as the corresponding type, and for codegen,  I check for 0 and 1 constants and added the appropriate constant instruction. The next step was to add conversions to jCastOP. For each conversion, I created a class that adds the corresponsing instruction to the stack. Then I added the conversions to the hashtable.I added consersions for int to long, int to double, long to int, long to double, double to long and double to int. Using the given boxing and unboxing conversions as an example, I added support for long to boxed long, double to boxed double, boxed long to long, and boxed double to double. The next step was to modify partial codegen in JMethodDeclaration; I checked if the return type was a long or a double and added the corresponding return instructions to the stack. The next step was to skip an offset for JMethodDeclaration, JConstructorDeclaration, and JVariableDeclaration. The code for each was very similar; in analyze, I checked if the paramater or variable was a long or double. If so, I called nextoffset() to increment the offset since longs and doubles take 2 offsets. In codegen of JReturnStament, I checked if expression was either a long or a double and added the corresponding return instruction to the stack. The next step was to modify codegenStore in Jvariable. Using int as an example, I check if the type was either a long or a double and added the corresponding store instruction for the offsets.  For codegen, codegenstore and in JArrayExpression, I added support for long a double. The last step was to modify the JArrayInitializer; I added checks to see if the component type is a long or a double and addeed the corresponding store instructions.
+      
+      Issues and resolution: I could not use parseLong on a string with l at the end. At first, I set i equal to text and compared i to the strings "0L" and "1L" but Swami advised me to remove L from the longs and call parseLong() on it. I didnt notice any differences when I called pasedLong but I followed Swami's advice anyway. Anoter problem is that I had a parse error when i did not modify the reference basictypes so i was failing Stats.java. 
+
+   Problem 2 (Operators)
+      Approach:
+      For jnegateop jUnaryop, I added support for ints, longs and doubles. For PostIncrement, I copied from PostDecrement and for, addIINCInstruction , I made the second paramater a 1 instead of -1.  For JlogicalOrOp, I copied from JLogicaAndOp.For JNotEqualOp, I copied from JEqualOp adn switched the instructions in addBranchInstruction ternary. For JGreaterEqual, I copied from JLessEqual and switched the instructions in addBranchInstruction ternary. I did the same thing for JLessthan, I also added specific instructions if the type is a double but that was to match the javac decompiled code. plusAssign,minusAssign,starAssign, remAssign, divAssign were very similar, I added supports for ints, longs, and doubles. I set the type in analyze() and addded the corresponding operator to the stack.  For the remaining assingment opereations, I asserted that they must be ints in analyze I added the instruction to the stack. 
+
+      Issues and resolution: I forgot to put the instructions for long and double and james and I spent and hours looking at the decomplied bytecode for basictypes class. We saw that it was doing ineg instead of dneg. Directions only said to modify analyze for jnegateOp, didn't say anything about codegen. Once I added support for long and doubles in codegen, It worked. For the binary expression operators, I checked for, ints, longs, and doubles and added the corresponding operator instruction to the stack.  
+
+   Problem 3 (Conditional Expression)
+      Approach: 
+    This problem was simple. I used JIfstatement as an example. The first thing I did was analyze the the condtion and asserted that it must be a boolean. Then I analyzed thenpart and elsepart. Then I asserted that the thenpart and else part must be the same type. In codegen(), I called generated code for the condition (when the condition is fasle, it will jump to the else label). After generating code for thenpart, I called an unconditional jump to the end of the conditionlExpression.   
+
+      Issues and resolution: none
+
+   Problem 4 (Do Statement)
+      Approach: 
+     This problem was also simple. The steps for analyze() were to push the doStatement into the enclosingStatementstack, analyze the condition,assert that the condition must be a boolean, analyze the body, then remove the doStatement fromt the stack. For  codegen(), I was confused at first because I was not sure which insatnce variable to  generate code for first. After comparing the j-- and the javac decomplide code, I relazied that i need to genrate code for the body first, generate code for the condition (goes to the beggining fdor the dostatement when true).
+
+      Issues and resolution:   I  had -1 in codegen for increment instead of 1 in addIINCInstruction. I fixed it by making  the second parameter a 1.
+
+   Problem 5 (For Statement)
+      Approach: For this problem I looked at whileStatement for reference and also went to james. He advised me to create a stack in Jmember called enclosing statement. I  then pushed a reference to the for loop into enlcosingstatment and op the stack after analyzing. The first step was to create a Localcontext instance using the given context. I analyzed each JStatement inside init, analyzed the condition, analyzed each JStatement in update, and analyzed the body. For codegen, I generated  code for each JStatement in init, generated code for the condition (will get out of for when false),generated code for each condition statement and added an unconditional jump to the condition label .  
+
+      Issues and resolution: none
+
+   Problem 6 (Break Statement)
+      Approach: The instructions were very helpful for this problem. The first step was to create a stack in Jmember, but I did that in the previous step. For do while, for and switch, I create two instance variables: hasBreak and a breakLabel. In the analyze(), i set hasBreak to true for the statement that is on the top of the enclosing stack. In codegen, I set the  breakLabel and add an unconditional jump to it for the statement that is on top of the stack. In codeGen for each controlflow statement, I add the breakLabel at tyhe end of the statement if it has a break. 
+
+      Issues and resolution: I got null pointer exceptions for condition and update for JForStatement, so I added checks to see if they are null. 
+
+   Problem 7 (Continue Statement)
+      Approach: 
+      This was the easisest of the problems. Continue statement was mostly the same as break statement. The only differences were that insated of hasBreak, and breaklabel, I created hasContinue, and continueLabel and in the codegen(0 for each controlflow statement, I added the continue label after genrating code for the condition. 
+
+      Issues and resolution: none
+
+   Problem 8 (Switch Statement)
+      Approach: This problem as by far the hardest problem in the project (I did it last). I used the instrcutions for guidance,the lookupswitch and tableswitch test files, and went to james for clarification for analyze. I created a class called switchHolder wich will hold key variables for each switch statement. I created an analyze method for Siwtchstatementgroup. In this analyze, I analyzed the switchlabels, incremented the number of labels and added the labels a casenumber arraylist. I also analyzed each statement in the block and got the hi and lo case labels. For JSwitchStatement analyze, I first pushed the the enclosingstatement stack. I analyzed the condition and asserted that it must be an int. After analyzing each switchstatment group. I stored the hi, lo, number of labels, casenumbers, stamentgorup, and condition into a  SwitchHolder object and appended that object to a switcholders arraylist. For codegen, I used the given code to determine if the switch is a table switch  or a lookup switch. if its a table switch,i created stack labels for each caselabel and added them to an arraylist. I called addTABLESWITCHInstruction , and for each switchsatememt I added the case labels (using the arraylist) to the stack and generated code for the block. Lookupswitch was similar, but I used a tree map to pair the casenumbers to stack labels.
+      
+      Issues and resolution: It analyzes the first switch, then the second, then generates code for the first and then the second. But when generating code for the first, it uses the values for the second switch   
+
+   Problem 9 (Exception Handlers)
+      Approach: 
+      For this problem,  I tried doing it by following the instuctions. but it did not work so I went to James. I created two Local context instance variables, one for parameters and one of the finally block. After analyzing parameter,  I created  JVariable and resolved the type of the variable to make sure that its not already defined in the scope. Then I used code from JMethodDeclaration to created a local defn and add it to the local context. After analyzing the Jvariable adn the cathblocks. , I analyzed the finally block. Thankfully codegen was easy becasue all the instrcutions were very specific. the only start I struggled with was that I was using the same startCatch label for each catchBlock. Once I realize this resolved it, the code worked perfectly. IMplementting analyze and codegen for JthrowStatement was easy, I analyzed the the expression, and in codegen, I generated code for the expression. For converting the list of exceptinos, I faced no problems, I follwoed the instructions and it worked
+
+      Issues and resolution:     
+      when comparing the instructions for j--exceptionhandlers and javacexceptionhandelrs, I realized that the instructions where the same
+but swami noticed that the exception tables were different so he advised to try to make them the same. when doing so, I realized that
+when creating an exception handler,the endlabel parameter needed to be endcatch and the handler label needed to be each catchblock (i was getting same handler label everytime).
+Thats when i realized that I needed to pass startcatch as the handler label and that I needed set the startcatch label inside of
+the catch for loop. once i did that, everything worked.
+
+   Problem 10 (Interface Type Declaration)
+      Approach: Abstract was already in the list of modifiers so I only had to add "public". I just copied from class and removed the variables that were not in interface and that worked.  
+
+      Issues and resolution: ...
+
+4. Did you receive help from anyone? List their names, status (classmate, 
+   CS451/651 grad, TA, other), and the nature of help received.
+
+   Name               Status       Help Received
+   ----               ------       -------------
+
+   James               TA          BasicTypes, Operators, for, switch, and exception and showed me how to use javap
+
+5. List any other comments here. Feel free to provide any feedback on how
+   much you learned from doing the assignment, and whether you enjoyed
+   doing it.
+
+   ...
